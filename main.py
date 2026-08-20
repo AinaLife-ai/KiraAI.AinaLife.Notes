@@ -121,9 +121,8 @@ class AinaNotesPlugin(BasePlugin):
         self.auto_prompt = str(basic.get("auto_prompt", "") or "").strip()
         self.gen_model = str(basic.get("gen_model", "") or "").strip()
         self.signature = str(basic.get("signature", "爱奈丽") or "爱奈丽").strip()
-        self.send_type = str(basic.get("send_target_type", "none") or "none").strip().lower()
-        self.send_target = str(basic.get("send_target_id", "0") or "0").strip()
-        self.send_adapter = str(basic.get("send_adapter", "qq") or "qq").strip()
+        raw_targets = basic.get("send_targets", []) or []
+        self.send_targets = [str(x).strip() for x in raw_targets if str(x).strip()]
 
         self.data_dir = Path(self.ctx.get_plugin_data_dir())
         self.state_path = self.data_dir / STATE_FILE
@@ -142,11 +141,10 @@ class AinaNotesPlugin(BasePlugin):
         self._load_state()
         self._task = asyncio.create_task(self._loop())
         logger.info(
-            "[温柔纸条] 已启动 notes=%d schedule=%s send=%s/%s",
+            "[温柔纸条] 已启动 notes=%d schedule=%s send=%s",
             len(self.notes),
             self.schedule_expr or "关闭",
-            self.send_type,
-            self.send_target if self.send_target != "0" else "-",
+            ",".join(self.send_targets) if self.send_targets else "-",
         )
 
     async def terminate(self):
@@ -164,7 +162,7 @@ class AinaNotesPlugin(BasePlugin):
         name="note_add",
         description=(
             "留下一张纸条（温柔话、提醒、心情、待办等）。纸条会保存到列表，"
-            "配置了发送目标时还会渲染成手写便签图片发出。"
+            "并渲染成手写便签图片直接发送到当前会话。"
         ),
         params={
             "type": "object",
@@ -187,7 +185,7 @@ class AinaNotesPlugin(BasePlugin):
         })
         self._trim()
         self._save_state()
-        await self._send_note_image(content, False)
+        await self._send_note_to_sid(event.sid, content, False)
         return f"已留好一张纸条：{content}"
 
     @register.tool(
@@ -275,7 +273,7 @@ class AinaNotesPlugin(BasePlugin):
             })
             self._trim()
             self._save_state()
-            sent = await self._send_note_image(content, True)
+            sent = await self._send_note_to_targets(content, True)
             logger.info("[温柔纸条] 已生成自动纸条%s：%s", "并发送图片" if sent else "（未发送）", content)
         finally:
             self.generating = False
@@ -307,28 +305,35 @@ class AinaNotesPlugin(BasePlugin):
 
     # ---------- 发送与渲染 ----------
 
-    async def _send_note_image(self, content: str, is_auto: bool) -> bool:
-        if self.send_type not in ("group", "private"):
-            return False
-        target = self.send_target.strip()
-        if not target or target == "0":
-            return False
+    async def _send_note_to_sid(self, sid: str, content: str, is_auto: bool) -> bool:
+        """把纸条图片发送到指定会话；渲染失败或发送失败返回 False。"""
         path = self._render_note(content, is_auto)
         if path is None:
             return False
-        session_type = "gm" if self.send_type == "group" else "dm"
-        sid = f"{self.send_adapter}:{session_type}:{target}"
         try:
             result = await self.ctx.message_processor.send_message_chain(
                 sid, MessageChain([Image(str(path))])
             )
             if result and getattr(result, "ok", False):
                 return True
-            logger.warning("[温柔纸条] 发送失败：%s", getattr(result, "err", "未知错误"))
+            logger.warning("[温柔纸条] 发送失败(%s)：%s", sid, getattr(result, "err", "未知错误"))
             return False
         except Exception as e:
-            logger.warning("[温柔纸条] 发送异常：%s", e)
+            logger.warning("[温柔纸条] 发送异常(%s)：%s", sid, e)
             return False
+
+    async def _send_note_to_targets(self, content: str, is_auto: bool) -> bool:
+        """自动纸条：发送到配置的所有目标会话（每行一个 sid）。"""
+        if not self.send_targets:
+            return False
+        sent = False
+        for sid in self.send_targets:
+            try:
+                if await self._send_note_to_sid(sid, content, is_auto):
+                    sent = True
+            except Exception as e:
+                logger.warning("[温柔纸条] 发送到 %s 失败：%s", sid, e)
+        return sent
 
     def _render_note(self, content: str, is_auto: bool):
         """渲染一张手写便签样式 PNG，返回文件路径；失败返回 None。"""
