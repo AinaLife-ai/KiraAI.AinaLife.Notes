@@ -60,11 +60,11 @@ FONT_FILES = {
     "微软雅黑": ["C:/Windows/Fonts/msyh.ttc", "C:/Windows/Fonts/msyhbd.ttc"],
 }
 
-# 配置的字体缺失时按此链回退（内置字体优先，保证永远有手写体）
-FONT_FALLBACK = ["寒蝉手拙（内置）", "悠哉手写（内置）", "华文行楷", "楷体", "华文楷体"]
+# 配置的字体缺失时按此链回退（内置寒蝉手拙体为最终兜底，保证永远有手写体）
+FONT_FALLBACK = ["寒蝉手拙（内置）", "华文行楷", "楷体", "华文楷体"]
 
-# 内置字体 1（默认第一位）：寒蝉手拙体（ChillZhuo，免费商用授权）
-# 主打「手拙之美」，歪扭潦草的萌感手写风，GB2312 全简体覆盖，子集化后约 5MB
+# 内置字体（默认第一位）：寒蝉手拙体（ChillZhuo，免费商用授权）
+# 主打「手拙之美」，歪扭潦草的萌感手写风，GB2312 全简体覆盖，子集化后约 5MB，随插件包分发
 BUNDLED_FONT_FAMILY = "寒蝉手拙（内置）"
 BUNDLED_FONT_FILE = "ChillZhuo-subset.ttf"
 BUNDLED_FONT_URLS = [
@@ -72,19 +72,9 @@ BUNDLED_FONT_URLS = [
     "https://raw.githubusercontent.com/AinaLife-ai/KiraAI.AinaLife.Notes/main/fonts/ChillZhuo-subset.ttf",
 ]
 
-# 内置字体 2（第二位）：悠哉字体（Yozai，OFL-1.1 开源可再分发）
-# 基于 Y.OzFont 的手写风格衍生字体，GB2312 子集化后约 3.9MB
-BUNDLED_FONT_FAMILY_2 = "悠哉手写（内置）"
-BUNDLED_FONT_FILE_2 = "Yozai-Regular-subset.ttf"
-BUNDLED_FONT_URLS_2 = [
-    "https://cdn.jsdelivr.net/gh/AinaLife-ai/KiraAI.AinaLife.Notes@main/fonts/Yozai-Regular-subset.ttf",
-    "https://raw.githubusercontent.com/AinaLife-ai/KiraAI.AinaLife.Notes/main/fonts/Yozai-Regular-subset.ttf",
-]
-
 # 内置字体配置表（供统一加载/预装遍历）
 BUNDLED_FONTS = [
     (BUNDLED_FONT_FAMILY, BUNDLED_FONT_FILE, BUNDLED_FONT_URLS),
-    (BUNDLED_FONT_FAMILY_2, BUNDLED_FONT_FILE_2, BUNDLED_FONT_URLS_2),
 ]
 
 # 满足任意一个即视为「系统已有手写字体」，无需预装内置字体
