@@ -9,7 +9,6 @@ KiraAI.AinaLife.Notes —— 温柔纸条（KiraAI 移植版）
     1) 随机间隔式：`1h/30m` = 1 小时 ± 30 分钟随机偏移（也支持 2h、45m、1d、3h/90m）
     2) cron 式：标准 5 字段，如 `0 9 * * *`
 - 手写便条图片渲染（Pillow），可发送到群聊 / 私聊
-- 内置开源手写字体（霞鹜文楷 Lite，OFL-1.1）自动预装，用户系统无手写体也不怕
 - 纸条状态 JSON 持久化到插件数据目录，重启不丢失
 
 License: AGPL-3.0
@@ -61,18 +60,19 @@ FONT_FILES = {
     "微软雅黑": ["C:/Windows/Fonts/msyh.ttc", "C:/Windows/Fonts/msyhbd.ttc"],
 }
 
-# 配置的字体缺失时按此链回退（手写感从强到弱，末尾为内置兜底）
-FONT_FALLBACK = ["华文行楷", "楷体", "华文楷体", "霞鹜文楷（内置）"]
+# 配置的字体缺失时按此链回退（内置悠哉手写体为最终兜底，保证永远有手写体）
+FONT_FALLBACK = ["悠哉手写（内置）", "华文行楷", "楷体", "华文楷体"]
 
-# 内置兜底字体：霞鹜文楷 Lite（OFL-1.1 开源，随插件自动预装，防用户系统无手写体）
-BUNDLED_FONT_FAMILY = "霞鹜文楷（内置）"
-BUNDLED_FONT_FILE = "LXGWWenKaiLite-Regular.ttf"
+# 内置兜底字体：悠哉字体（Yozai，OFL-1.1 开源可再分发）
+# 基于 Y.OzFont 的手写风格衍生字体，GB2312 子集化后约 3.9MB，随插件包分发
+BUNDLED_FONT_FAMILY = "悠哉手写（内置）"
+BUNDLED_FONT_FILE = "Yozai-Regular-subset.ttf"
 BUNDLED_FONT_URLS = [
-    "https://cdn.jsdelivr.net/gh/lxgw/LxgwWenKai-Lite/fonts/TTF/LXGWWenKaiLite-Regular.ttf",
-    "https://raw.githubusercontent.com/lxgw/LxgwWenKai-Lite/main/fonts/TTF/LXGWWenKaiLite-Regular.ttf",
+    "https://cdn.jsdelivr.net/gh/AinaLife-ai/KiraAI.AinaLife.Notes@main/fonts/Yozai-Regular-subset.ttf",
+    "https://raw.githubusercontent.com/AinaLife-ai/KiraAI.AinaLife.Notes/main/fonts/Yozai-Regular-subset.ttf",
 ]
 # 满足任意一个即视为「系统已有手写字体」，无需预装内置字体
-HANDWRITTEN_FAMILIES = ["华文行楷", "楷体", "华文楷体", "方正静蕾简体", "方正喵呜体"]
+HANDWRITTEN_FAMILIES = ["悠哉手写（内置）", "华文行楷", "楷体", "华文楷体", "方正静蕾简体", "方正喵呜体"]
 
 # 字体目录扫描关键词：family 名 -> 文件名匹配关键词（不区分大小写）
 FONT_FILE_KEYWORDS = {
@@ -151,7 +151,7 @@ class AinaNotesPlugin(BasePlugin):
         self.auto_prompt = str(basic.get("auto_prompt", "") or "").strip()
         self.gen_model = str(basic.get("gen_model", "") or "").strip()
         self.signature = str(basic.get("signature", "爱奈丽") or "爱奈丽").strip()
-        self.font_family = str(basic.get("font_family", "华文行楷") or "华文行楷").strip()
+        self.font_family = str(basic.get("font_family", BUNDLED_FONT_FAMILY) or BUNDLED_FONT_FAMILY).strip()
         raw_targets = basic.get("send_targets", []) or []
         self.send_targets = [str(x).strip() for x in raw_targets if str(x).strip()]
 
@@ -340,7 +340,7 @@ class AinaNotesPlugin(BasePlugin):
     # ---------- 发送与渲染 ----------
 
     async def _send_note_to_sid(self, sid: str, content: str, is_auto: bool) -> bool:
-        """把纸条图片发送到指定会话；渲染失败或发送失败返回 False。"""
+        """把纸条图片发送到指定会话；未配置目标或渲染失败时返回 False。"""
         path = self._render_note(content, is_auto)
         if path is None:
             return False
@@ -461,7 +461,7 @@ class AinaNotesPlugin(BasePlugin):
         return ImageFont.load_default()
 
     async def _ensure_bundled_font(self):
-        """后台预装内置手写字体：系统已有手写体或已存在则跳过，否则复制随附字体或下载。"""
+        """后台预装内置手写字体：系统已有手写体或已存在则跳过，下载失败静默忽略。"""
         try:
             # 系统已存在任意手写字体时无需预装
             for fam in HANDWRITTEN_FAMILIES:
@@ -502,7 +502,7 @@ class AinaNotesPlugin(BasePlugin):
                                 f.write(chunk)
                     if tmp.stat().st_size > 100000:
                         os.replace(tmp, target)
-                        logger.info("[温柔纸条] 内置手写字体已下载安装：%s", BUNDLED_FONT_FILE)
+                        logger.info("[温柔纸条] 内置手写字体已预装：%s", BUNDLED_FONT_FILE)
                         return
                 except Exception as e:
                     logger.warning("[温柔纸条] 内置字体下载失败(%s)：%s", url, e)
