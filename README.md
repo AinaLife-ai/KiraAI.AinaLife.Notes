@@ -35,7 +35,6 @@ data/plugins/
       ├── icon.svg
       ├── icon-dark.svg
       ├── fonts/ChillZhuo-subset.ttf        ← 内置寒蝉手拙体（默认，5MB）
-      ├── fonts/Yozai-Regular-subset.ttf    ← 内置悠哉手写体（第二位，3.9MB）
       └── LICENSE
 ```
 
@@ -56,7 +55,7 @@ data/plugins/
 | `auto_prompt` 自动纸条提示词 | 多行文本 | `""` | 留空使用内置默认（直接输出一句 **0-20 字**暖心话） |
 | `gen_model` 生成纸条的模型 | 模型选择 | `""` | 留空 = 跟随 KiraAI 默认模型 |
 | `signature` 便条签名 | 文本 | `爱奈丽` | 便签图片右下角的手写签名 |
-| `font_family` 便签字体 | 枚举 | `悠哉手写（内置）` | **手写体下拉选择**，见下文字体说明 |
+| `font_family` 便签字体 | 枚举 | `寒蝉手拙（内置）` | **手写体下拉选择**，见下文字体说明 |
 | `send_targets` 自动纸条发送目标会话 | 列表 | `[]` | 每行一个会话标识，见下文；留空 = 仅存档不发送 |
 
 > 💡 **手动纸条**（`note_add`）**始终发送到当前会话**，与 `send_targets` 无关；`send_targets` 只控制**定时自动纸条**的发送去向。
@@ -68,7 +67,6 @@ data/plugins/
 | 字体 | 说明 |
 |---|---|
 | **寒蝉手拙（内置）**（默认） | **ChillZhuo 免费商用手写体**，歪扭潦草的萌系手写风，随插件分发，开箱即用 |
-| **悠哉手写（内置）** | **Yozai 开源手写体（OFL-1.1）**，手写感次之，随插件分发 |
 | **华文行楷** | 系统字体，行书手写感强（如未安装自动回退） |
 | **楷体** / **华文楷体** | 楷书，端正手写感 |
 | **方正静蕾简体** | 手写体，女生手账感 |
@@ -76,9 +74,8 @@ data/plugins/
 | **隶书** / **幼圆** | 艺术字体 |
 | **微软雅黑** | 兜底印刷体 |
 
-> - 内置 **寒蝉手拙体**（[Warren2060/ChillShouZhuo](https://github.com/Warren2060/ChillShouZhuo)）主打「手拙之美」，笔画歪扭潦草、萌感十足，作者声明免费授权全社会使用（含商用），GB2312 全简体覆盖，子集化后约 5MB 随插件分发。
-> - 内置 **Yozai（悠哉）** 来自 [lxgw/yozai-font](https://github.com/lxgw/yozai-font)（OFL-1.1，免费可商用），子集化后约 3.9MB。
-> - 两个内置字体**任何系统都能出真实手写效果，无需联网、无需安装字体**；选系统字体时缺字体自动按优先级回退，最终兜底内置字体。
+> - 内置 **寒蝉手拙体**（[Warren2060/ChillShouZhuo](https://github.com/Warren2060/ChillShouZhuo)）主打「手拙之美」，笔画歪扭潦草、萌感十足，作者声明免费授权全社会使用（含商用），GB2312 全简体覆盖，子集化后约 5MB 随插件分发，**任何系统都能出真实手写效果，无需联网、无需安装字体**。
+> - 选其他系统字体时，缺字体自动按手写感优先级回退（先静态路径查找，再扫描系统字体目录按文件名关键词匹配），最终兜底内置寒蝉手拙体。
 
 ### 📮 发送目标会话格式（`send_targets`）
 
@@ -136,7 +133,7 @@ telegram:gm:99999   # 其他适配器同理（gm=群聊，dm=私聊）
 
 - **背景**：米色横线活页纸（浅蓝横线 + 左侧打孔）
 - **标题**：自动纸条写「温柔小纸条」，手动纸条写「小纸条」，标题右侧有小爱心
-- **正文**：内置寒蝉手拙体（默认第一位，潦草萌系），也可选悠哉手写或其他字体；自动换行，最多 4 行 + 省略号
+- **正文**：内置寒蝉手拙体（默认，潦草萌系），可切换其他字体；自动换行，最多 4 行 + 省略号
 - **右下角**：红色大爱心 + 蓝色手写签名（默认「爱奈丽」，可配置）
 
 图片渲染使用 **Pillow**（自动安装）。
@@ -164,7 +161,7 @@ telegram:gm:99999   # 其他适配器同理（gm=群聊，dm=私聊）
 | 定时 | 随机间隔（小时范围） | 随机间隔**或 cron** 两种 |
 | 发送目标 | 单目标（类型+ID） | **多会话列表**（可同时发多个群/私聊） |
 | 手动纸条 | 配置了目标才发 | **总是发到当前会话**，且不复述内容 |
-| 字体 | SkiaSharp 固定楷体 | **内置悠哉手写体默认** + 系统字体可选手写 enum |
+| 字体 | SkiaSharp 固定楷体 | **内置寒蝉手拙体默认** + 系统字体可选手写 enum |
 | 渲染 | SkiaSharp | Pillow |
 | 存储 | Alife StorageSystem | 插件数据目录 JSON |
 | 函数 | XmlFunctionCaller | KiraAI 工具注册 |
@@ -181,7 +178,7 @@ python -m py_compile main.py
 ## 📄 开源协议
 
 - 插件本体：[GNU Affero General Public License v3.0](LICENSE)（网络服务使用本插件也需开放源码）
-- 内置字体：寒蝉手拙体（ChillZhuo）© 萧熠Siue/寒蝉字型，免费商用授权；Yozai（悠哉）© lxgw，SIL Open Font License 1.1，均可自由使用、修改与再分发（不可单独售卖字体文件）
+- 内置字体：寒蝉手拙体（ChillZhuo）© 萧熠Siue/寒蝉字型，免费商用授权（不可单独售卖字体文件）
 
 ```
 Copyright (C) 2026 AinaLife-ai（爱奈丽）
@@ -196,4 +193,3 @@ by the Free Software Foundation, either version 3 of the License, or
 - [Alife](https://github.com/BDFFZI/Alife) 框架与原作者「半点星光」
 - [KiraAI](https://github.com/xxynet/KiraAI) 插件框架
 - [Warren2060/ChillShouZhuo](https://github.com/Warren2060/ChillShouZhuo) 寒蝉手拙体（免费商用）
-- [lxgw/yozai-font](https://github.com/lxgw/yozai-font) 悠哉开源手写字体（OFL-1.1）
