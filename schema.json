@@ -1,0 +1,72 @@
+{
+  "info_intro": {
+    "type": "info",
+    "name": "说明",
+    "hint": "温柔纸条：留/看/删/清空纸条，AI 按定时自动生成温柔便签，可渲染成手写便条图片发送到群聊或私聊。",
+    "level": "info"
+  },
+  "section_basic": {
+    "type": "section",
+    "name": "基础设置",
+    "collapsed": false,
+    "fields": {
+      "enabled": {
+        "type": "switch",
+        "name": "启用插件",
+        "default": true,
+        "hint": "关闭后工具与自动生成全部不生效"
+      },
+      "max_notes": {
+        "type": "integer",
+        "name": "最大纸条数量",
+        "default": 100,
+        "minimum": 1,
+        "hint": "最多保留多少张，超出自动丢弃最旧的；0 表示不限"
+      },
+      "auto_schedule": {
+        "type": "string",
+        "name": "自动纸条定时",
+        "default": "",
+        "hint": "空/0/off 关闭；随机间隔式如 1h/30m（1小时±30分钟）、2h、45m、1d；cron 式如 0 9 * * *"
+      },
+      "auto_prompt": {
+        "type": "textarea",
+        "name": "自动纸条提示词",
+        "default": "",
+        "hint": "留空使用内置默认提示词（直接输出一句 50 字内暖心话）"
+      },
+      "gen_model": {
+        "type": "model_select",
+        "name": "生成纸条的模型",
+        "model_type": "llm",
+        "default": "",
+        "hint": "留空 = 跟随默认模型"
+      },
+      "signature": {
+        "type": "string",
+        "name": "便条签名",
+        "default": "爱奈丽",
+        "hint": "便签图片右下角的手写签名"
+      },
+      "send_target_type": {
+        "type": "enum",
+        "name": "纸条图片发送类型",
+        "options": ["none", "group", "private"],
+        "default": "none",
+        "hint": "none=仅存档不发送；group=发送到群聊；private=发送到私聊"
+      },
+      "send_target_id": {
+        "type": "string",
+        "name": "纸条图片发送目标",
+        "default": "0",
+        "hint": "群号或QQ号，与发送类型配合使用，0 表示不发送"
+      },
+      "send_adapter": {
+        "type": "string",
+        "name": "发送适配器实例名",
+        "default": "qq",
+        "hint": "会话标识第一段（如 qq），与你的适配器实例名一致"
+      }
+    }
+  }
+}
