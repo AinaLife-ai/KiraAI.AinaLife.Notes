@@ -2,7 +2,7 @@
   "info_intro": {
     "type": "info",
     "name": "说明",
-    "hint": "温柔纸条：留/看/删/清空纸条，AI 按定时自动生成温柔便签，可渲染成手写便条图片发送到群聊或私聊。",
+    "hint": "温柔纸条：留/看/删/清空纸条，AI 按定时自动生成温柔便签，可渲染成手写便条图片发送到多个目标会话。",
     "level": "info"
   },
   "section_basic": {
@@ -48,24 +48,11 @@
         "default": "爱奈丽",
         "hint": "便签图片右下角的手写签名"
       },
-      "send_target_type": {
-        "type": "enum",
-        "name": "纸条图片发送类型",
-        "options": ["none", "group", "private"],
-        "default": "none",
-        "hint": "none=仅存档不发送；group=发送到群聊；private=发送到私聊"
-      },
-      "send_target_id": {
-        "type": "string",
-        "name": "纸条图片发送目标",
-        "default": "0",
-        "hint": "群号或QQ号，与发送类型配合使用，0 表示不发送"
-      },
-      "send_adapter": {
-        "type": "string",
-        "name": "发送适配器实例名",
-        "default": "qq",
-        "hint": "会话标识第一段（如 qq），与你的适配器实例名一致"
+      "send_targets": {
+        "type": "list",
+        "name": "自动纸条发送目标会话",
+        "default": [],
+        "hint": "每行一个会话标识，格式 适配器名:类型:ID，如 qq:gm:123456789（群聊）或 qq:dm:987654321（私聊）；留空=仅存档不发送"
       }
     }
   }
