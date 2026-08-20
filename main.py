@@ -46,16 +46,22 @@ STATE_FILE = "notes_state.json"
 DEFAULT_PROMPT = (
     "现在又到了生成温柔纸条的时间。\n"
     "请直接输出一句给用户的暖心话（不要解释、不要寒暄、不要带前缀，直接给纸条内容本身，"
-    "控制在 50 字以内，像「记得喝水呀，你的嗓子会感谢你的」这样自然的口吻）。"
+    "严格控制在 0-20 字以内，像「今天天气真好」这样自然简短的口吻）。"
 )
 
-FONT_CANDIDATES = [
-    "C:/Windows/Fonts/simkai.ttf",
-    "C:/Windows/Fonts/simhei.ttf",
-    "C:/Windows/Fonts/msyh.ttc",
-    "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
-    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-]
+FONT_FILES = {
+    "华文行楷": ["C:/Windows/Fonts/STXINGKA.TTF", "C:/Windows/Fonts/STXINGKE.TTF"],
+    "楷体": ["C:/Windows/Fonts/simkai.ttf", "/usr/share/fonts/truetype/arphic/ukai.ttc"],
+    "华文楷体": ["C:/Windows/Fonts/STKAITI.TTF", "/usr/share/fonts/truetype/arphic/ukai.ttc"],
+    "方正静蕾简体": ["C:/Windows/Fonts/FZJLJW.TTF", "C:/Windows/Fonts/FZJL_GBK.TTF", "C:/Windows/Fonts/FZJL.TTF"],
+    "方正喵呜体": ["C:/Windows/Fonts/FZMWBJW.TTF", "C:/Windows/Fonts/FZMWB_GBK.TTF"],
+    "隶书": ["C:/Windows/Fonts/simli.ttf"],
+    "幼圆": ["C:/Windows/Fonts/simyuan.ttf"],
+    "微软雅黑": ["C:/Windows/Fonts/msyh.ttc", "C:/Windows/Fonts/msyhbd.ttc"],
+}
+
+# 配置的字体缺失时按此链回退（手写感从强到弱）
+FONT_FALLBACK = ["华文行楷", "楷体", "华文楷体", "微软雅黑"]
 
 
 def parse_schedule(expr):
@@ -121,6 +127,7 @@ class AinaNotesPlugin(BasePlugin):
         self.auto_prompt = str(basic.get("auto_prompt", "") or "").strip()
         self.gen_model = str(basic.get("gen_model", "") or "").strip()
         self.signature = str(basic.get("signature", "爱奈丽") or "爱奈丽").strip()
+        self.font_family = str(basic.get("font_family", "华文行楷") or "华文行楷").strip()
         raw_targets = basic.get("send_targets", []) or []
         self.send_targets = [str(x).strip() for x in raw_targets if str(x).strip()]
 
@@ -186,7 +193,8 @@ class AinaNotesPlugin(BasePlugin):
         self._trim()
         self._save_state()
         await self._send_note_to_sid(event.sid, content, False)
-        return f"已留好一张纸条：{content}"
+        # 注意：不要在这里复述纸条内容，避免与已发送的便签图片重复
+        return "纸条已留好，便签图片已发到当前会话"
 
     @register.tool(
         name="note_list",
@@ -385,12 +393,19 @@ class AinaNotesPlugin(BasePlugin):
             return None
 
     def _load_font(self, size):
-        for cand in FONT_CANDIDATES:
-            try:
-                if os.path.exists(cand):
-                    return ImageFont.truetype(cand, size)
-            except Exception:
+        """按配置字体加载，缺失时按手写感优先级回退。"""
+        candidates = [self.font_family] + [f for f in FONT_FALLBACK if f != self.font_family]
+        tried = set()
+        for name in candidates:
+            if name in tried:
                 continue
+            tried.add(name)
+            for cand in FONT_FILES.get(name, []):
+                try:
+                    if os.path.exists(cand):
+                        return ImageFont.truetype(cand, size)
+                except Exception:
+                    continue
         return ImageFont.load_default()
 
     @staticmethod
