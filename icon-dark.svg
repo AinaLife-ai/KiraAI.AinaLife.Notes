@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3A2430"/>
+      <stop offset="1" stop-color="#241A24"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="url(#bg)"/>
+  <g transform="rotate(-6 256 256)">
+    <rect x="110" y="110" width="292" height="292" rx="18" fill="#FDF6F9" stroke="#E8A8C0" stroke-width="6"/>
+    <line x1="150" y1="180" x2="362" y2="180" stroke="#9EC5F5" stroke-width="8" stroke-linecap="round"/>
+    <line x1="150" y1="220" x2="362" y2="220" stroke="#9EC5F5" stroke-width="8" stroke-linecap="round"/>
+    <line x1="150" y1="260" x2="300" y2="260" stroke="#9EC5F5" stroke-width="8" stroke-linecap="round"/>
+    <line x1="150" y1="300" x2="340" y2="300" stroke="#9EC5F5" stroke-width="8" stroke-linecap="round"/>
+    <line x1="150" y1="340" x2="280" y2="340" stroke="#9EC5F5" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <path d="M256 392 C 210 340 150 296 150 220 C 150 186 182 178 214 178 C 232 178 250 186 256 200 C 262 186 280 178 298 178 C 330 178 362 186 362 220 C 362 296 302 340 256 392 Z" fill="#F27E96"/>
+</svg>
