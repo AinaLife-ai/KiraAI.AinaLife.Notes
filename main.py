@@ -63,6 +63,19 @@ FONT_FILES = {
 # 配置的字体缺失时按此链回退（手写感从强到弱）
 FONT_FALLBACK = ["华文行楷", "楷体", "华文楷体", "微软雅黑"]
 
+# 字体目录扫描关键词：family 名 -> 文件名匹配关键词（不区分大小写）
+FONT_FILE_KEYWORDS = {
+    "华文行楷": ["xingkai", "stxingk"],
+    "楷体": ["simkai", "kaiu", "ukai"],
+    "华文楷体": ["stkaiti", "kaiti"],
+    "方正静蕾简体": ["fzjl", "jinglei"],
+    "方正喵呜体": ["fzmw", "miaowu"],
+    "隶书": ["simli", "lishu"],
+    "幼圆": ["simyou", "simyuan", "youyuan"],
+    "微软雅黑": ["msyh", "yahei"],
+}
+FONT_SCAN_DIRS = ["C:/Windows/Fonts", "/usr/share/fonts", "/usr/local/share/fonts"]
+
 
 def parse_schedule(expr):
     """解析定时表达式，返回描述元组；无效 / 空返回 None（关闭）。
@@ -393,7 +406,7 @@ class AinaNotesPlugin(BasePlugin):
             return None
 
     def _load_font(self, size):
-        """按配置字体加载，缺失时按手写感优先级回退。"""
+        """按配置字体加载，缺失时按手写感优先级回退（先静态路径，再扫描字体目录）。"""
         candidates = [self.font_family] + [f for f in FONT_FALLBACK if f != self.font_family]
         tried = set()
         for name in candidates:
@@ -406,7 +419,32 @@ class AinaNotesPlugin(BasePlugin):
                         return ImageFont.truetype(cand, size)
                 except Exception:
                     continue
+            # 静态路径没找到：扫描字体目录按文件名关键词匹配
+            for cand in self._scan_font_files(name):
+                try:
+                    return ImageFont.truetype(cand, size)
+                except Exception:
+                    continue
         return ImageFont.load_default()
+
+    @staticmethod
+    def _scan_font_files(family):
+        """扫描系统字体目录，按 family 的关键词匹配字体文件路径。"""
+        keywords = FONT_FILE_KEYWORDS.get(family, [family])
+        hits = []
+        for base in FONT_SCAN_DIRS:
+            if not os.path.isdir(base):
+                continue
+            try:
+                for fname in os.listdir(base):
+                    low = fname.lower()
+                    if not low.endswith((".ttf", ".ttc", ".otf")):
+                        continue
+                    if any(kw.lower() in low for kw in keywords if kw):
+                        hits.append(os.path.join(base, fname))
+            except Exception:
+                continue
+        return hits
 
     @staticmethod
     def _wrap_text(text, font, max_width):
