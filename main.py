@@ -98,14 +98,17 @@ def compute_next(schedule, now_ts):
         if croniter is None:
             return None
         try:
-            return croniter(schedule[1], datetime.fromtimestamp(now_ts)).get_next(float)
+            # 注意：get_next(float) 会把 naive datetime 当 UTC 处理导致时区偏移，
+            # 这里用 get_next(datetime) 拿本地 naive 结果再转 epoch，语义一致
+            nxt = croniter(schedule[1], datetime.fromtimestamp(now_ts)).get_next(datetime)
+            return nxt.timestamp()
         except Exception:
             return None
     return None
 
 
 class AinaNotesPlugin(BasePlugin):
-    """温柔纸条：留/看/删/清空 + 自动生成温柔便签，可渲染手写便签图片发送。"""
+    """温柔纸条：留/看/删/清空 + 自动生成温柔便签，可渲染手写便条图片发送。"""
 
     def __init__(self, ctx, cfg: dict):
         super().__init__(ctx, cfg)
