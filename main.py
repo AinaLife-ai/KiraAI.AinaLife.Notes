@@ -425,7 +425,7 @@ class AinaNotesPlugin(BasePlugin):
             return None
 
     def _bundled_font_path(self, family=None, filename=None):
-        """内置字体路径：优先插件包内随附文件，其次插件数据目录（运行时下载）。"""
+        """内置字体路径：优先插件包内随附文件（根目录或 fonts/ 子目录），其次插件数据目录（运行时下载）。"""
         if family is None:
             family = BUNDLED_FONT_FAMILY
         if filename is None:
@@ -438,9 +438,9 @@ class AinaNotesPlugin(BasePlugin):
                 return None
         try:
             pkg_dir = Path(__file__).resolve().parent
-            pkg = pkg_dir / filename
-            if pkg.exists():
-                return pkg
+            for cand in (pkg_dir / filename, pkg_dir / "fonts" / filename):
+                if cand.exists():
+                    return cand
         except Exception:
             pass
         bundled = self.data_dir / filename
@@ -502,13 +502,14 @@ class AinaNotesPlugin(BasePlugin):
             return
         # 插件包目录已随附字体则直接复制，无需下载
         try:
-            pkg = Path(__file__).resolve().parent / fname
-            if pkg.exists() and pkg.stat().st_size > 100000:
-                self.data_dir.mkdir(parents=True, exist_ok=True)
-                import shutil
-                shutil.copyfile(pkg, target)
-                logger.info("[温柔纸条] 内置手写字体已从插件包安装：%s", fname)
-                return
+            pkg_dir = Path(__file__).resolve().parent
+            for cand in (pkg_dir / fname, pkg_dir / "fonts" / fname):
+                if cand.exists() and cand.stat().st_size > 100000:
+                    self.data_dir.mkdir(parents=True, exist_ok=True)
+                    import shutil
+                    shutil.copyfile(cand, target)
+                    logger.info("[温柔纸条] 内置手写字体已从插件包安装：%s", fname)
+                    return
         except Exception as e:
             logger.warning("[温柔纸条] 复制随附字体失败：%s", e)
         # 逐源尝试下载，写临时文件再原子替换
