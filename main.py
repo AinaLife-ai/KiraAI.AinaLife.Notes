@@ -9,6 +9,7 @@ KiraAI.AinaLife.Notes —— 温柔纸条（KiraAI 移植版）
     1) 随机间隔式：`1h/30m` = 1 小时 ± 30 分钟随机偏移（也支持 2h、45m、1d、3h/90m）
     2) cron 式：标准 5 字段，如 `0 9 * * *`
 - 手写便条图片渲染（Pillow），可发送到群聊 / 私聊
+- 内置开源手写字体（霞鹜文楷 Lite，OFL-1.1）自动预装，用户系统无手写体也不怕
 - 纸条状态 JSON 持久化到插件数据目录，重启不丢失
 
 License: AGPL-3.0
@@ -60,8 +61,18 @@ FONT_FILES = {
     "微软雅黑": ["C:/Windows/Fonts/msyh.ttc", "C:/Windows/Fonts/msyhbd.ttc"],
 }
 
-# 配置的字体缺失时按此链回退（手写感从强到弱）
-FONT_FALLBACK = ["华文行楷", "楷体", "华文楷体", "微软雅黑"]
+# 配置的字体缺失时按此链回退（手写感从强到弱，末尾为内置兜底）
+FONT_FALLBACK = ["华文行楷", "楷体", "华文楷体", "霞鹜文楷（内置）"]
+
+# 内置兜底字体：霞鹜文楷 Lite（OFL-1.1 开源，随插件自动预装，防用户系统无手写体）
+BUNDLED_FONT_FAMILY = "霞鹜文楷（内置）"
+BUNDLED_FONT_FILE = "LXGWWenKaiLite-Regular.ttf"
+BUNDLED_FONT_URLS = [
+    "https://cdn.jsdelivr.net/gh/lxgw/LxgwWenKai-Lite/fonts/TTF/LXGWWenKaiLite-Regular.ttf",
+    "https://raw.githubusercontent.com/lxgw/LxgwWenKai-Lite/main/fonts/TTF/LXGWWenKaiLite-Regular.ttf",
+]
+# 满足任意一个即视为「系统已有手写字体」，无需预装内置字体
+HANDWRITTEN_FAMILIES = ["华文行楷", "楷体", "华文楷体", "方正静蕾简体", "方正喵呜体"]
 
 # 字体目录扫描关键词：family 名 -> 文件名匹配关键词（不区分大小写）
 FONT_FILE_KEYWORDS = {
@@ -160,6 +171,8 @@ class AinaNotesPlugin(BasePlugin):
             logger.warning("[温柔纸条] Pillow 未安装，便签图片渲染不可用（requirements.txt 会自动安装）")
         self._load_state()
         self._task = asyncio.create_task(self._loop())
+        # 后台预装内置手写字体（不阻塞启动；下载失败自动忽略）
+        asyncio.create_task(self._ensure_bundled_font())
         logger.info(
             "[温柔纸条] 已启动 notes=%d schedule=%s send=%s",
             len(self.notes),
@@ -405,8 +418,20 @@ class AinaNotesPlugin(BasePlugin):
             logger.warning("[温柔纸条] 便签渲染失败：%s", e)
             return None
 
+    def _bundled_font_path(self):
+        """内置字体路径：优先插件包内随附文件，其次插件数据目录（运行时下载）。"""
+        try:
+            pkg_dir = Path(__file__).resolve().parent
+            pkg = pkg_dir / BUNDLED_FONT_FILE
+            if pkg.exists():
+                return pkg
+        except Exception:
+            pass
+        bundled = self.data_dir / BUNDLED_FONT_FILE
+        return bundled if bundled.exists() else None
+
     def _load_font(self, size):
-        """按配置字体加载，缺失时按手写感优先级回退（先静态路径，再扫描字体目录）。"""
+        """按配置字体加载，缺失时按手写感优先级回退（先静态路径，再扫描字体目录，最后内置字体）。"""
         candidates = [self.font_family] + [f for f in FONT_FALLBACK if f != self.font_family]
         tried = set()
         for name in candidates:
@@ -425,7 +450,70 @@ class AinaNotesPlugin(BasePlugin):
                     return ImageFont.truetype(cand, size)
                 except Exception:
                     continue
+            # 内置兜底字体（霞鹜文楷 Lite，随插件预装或运行时下载）
+            if name == BUNDLED_FONT_FAMILY:
+                bundled = self._bundled_font_path()
+                try:
+                    if bundled is not None:
+                        return ImageFont.truetype(str(bundled), size)
+                except Exception:
+                    continue
         return ImageFont.load_default()
+
+    async def _ensure_bundled_font(self):
+        """后台预装内置手写字体：系统已有手写体或已存在则跳过，否则复制随附字体或下载。"""
+        try:
+            # 系统已存在任意手写字体时无需预装
+            for fam in HANDWRITTEN_FAMILIES:
+                for cand in FONT_FILES.get(fam, []):
+                    try:
+                        if os.path.exists(cand):
+                            return
+                    except Exception:
+                        pass
+                if self._scan_font_files(fam):
+                    return
+            target = self.data_dir / BUNDLED_FONT_FILE
+            if target.exists() and target.stat().st_size > 100000:
+                return
+            # 插件包目录已随附字体则直接复制，无需下载
+            try:
+                pkg = Path(__file__).resolve().parent / BUNDLED_FONT_FILE
+                if pkg.exists() and pkg.stat().st_size > 100000:
+                    self.data_dir.mkdir(parents=True, exist_ok=True)
+                    import shutil
+                    shutil.copyfile(pkg, target)
+                    logger.info("[温柔纸条] 内置手写字体已从插件包安装：%s", BUNDLED_FONT_FILE)
+                    return
+            except Exception as e:
+                logger.warning("[温柔纸条] 复制随附字体失败：%s", e)
+            # 逐源尝试下载，写临时文件再原子替换
+            tmp = target.with_suffix(".tmp")
+            import urllib.request
+            for url in BUNDLED_FONT_URLS:
+                try:
+                    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                    with urllib.request.urlopen(req, timeout=60) as resp:
+                        with open(tmp, "wb") as f:
+                            while True:
+                                chunk = resp.read(65536)
+                                if not chunk:
+                                    break
+                                f.write(chunk)
+                    if tmp.stat().st_size > 100000:
+                        os.replace(tmp, target)
+                        logger.info("[温柔纸条] 内置手写字体已下载安装：%s", BUNDLED_FONT_FILE)
+                        return
+                except Exception as e:
+                    logger.warning("[温柔纸条] 内置字体下载失败(%s)：%s", url, e)
+                finally:
+                    try:
+                        if tmp.exists():
+                            tmp.unlink()
+                    except Exception:
+                        pass
+        except Exception as e:
+            logger.warning("[温柔纸条] 内置字体预装异常：%s", e)
 
     @staticmethod
     def _scan_font_files(family):
