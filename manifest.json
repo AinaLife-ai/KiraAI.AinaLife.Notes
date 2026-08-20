@@ -1,9 +1,9 @@
 {
   "plugin_id": "ainalife_notes",
   "display_name": "温柔纸条",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "AinaLife-ai (爱奈丽)",
-  "description": "留纸条/看纸条/删纸条/清空，AI 自主生成温柔便签，支持随机间隔与 cron 定时，可渲染手写便条图片发送到群聊/私聊。",
+  "description": "留纸条/看纸条/删纸条/清空，AI 自主生成温柔便签，支持随机间隔与 cron 定时，可渲染手写便条图片发送到多会话。",
   "repo": "https://github.com/AinaLife-ai/KiraAI.AinaLife.Notes",
   "icon": "icon.svg",
   "icon-dark": "icon-dark.svg",
