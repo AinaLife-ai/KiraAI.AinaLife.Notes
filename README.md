@@ -34,7 +34,7 @@ data/plugins/
       ├── requirements.txt
       ├── icon.svg
       ├── icon-dark.svg
-      ├── fonts/ChillZhuo-subset.ttf        ← 内置寒蝉手拙体（默认，5MB）
+      ├── fonts/ChillZhuo-subset.woff2     ← 内置寒蝉手拙体（默认，WOFF2 约 2.6MB）
       └── LICENSE
 ```
 
@@ -74,7 +74,7 @@ data/plugins/
 | **隶书** / **幼圆** | 艺术字体 |
 | **微软雅黑** | 兜底印刷体 |
 
-> - 内置 **寒蝉手拙体**（[Warren2060/ChillShouZhuo](https://github.com/Warren2060/ChillShouZhuo)）主打「手拙之美」，笔画歪扭潦草、萌感十足，作者声明免费授权全社会使用（含商用），GB2312 全简体覆盖，子集化后约 5MB 随插件分发，**任何系统都能出真实手写效果，无需联网、无需安装字体**。
+> - 内置 **寒蝉手拙体**（[Warren2060/ChillShouZhuo](https://github.com/Warren2060/ChillShouZhuo)）主打「手拙之美」，笔画歪扭潦草、萌感十足，作者声明免费授权全社会使用（含商用），GB2312 全简体覆盖，经 WOFF2 压缩后约 2.6MB 随插件分发，**任何系统都能出真实手写效果，无需联网、无需安装字体**。
 > - 选其他系统字体时，缺字体自动按手写感优先级回退（先静态路径查找，再扫描系统字体目录按文件名关键词匹配），最终兜底内置寒蝉手拙体。
 
 ### 📮 发送目标会话格式（`send_targets`）
