@@ -193,3 +193,12 @@ by the Free Software Foundation, either version 3 of the License, or
 - [Alife](https://github.com/BDFFZI/Alife) 框架与原作者「半点星光」
 - [KiraAI](https://github.com/xxynet/KiraAI) 插件框架
 - [Warren2060/ChillShouZhuo](https://github.com/Warren2060/ChillShouZhuo) 寒蝉手拙体（免费商用）
+
+<details>
+<summary>📝 更新日志</summary>
+
+**v1.0.8**
+
+- 兼容 KiraAI 3.0 GA 弃用面：`ctx.message_processor.send_message_chain` → `ctx.send_message_chain`（两代等价）。零行为变化。
+
+</details>
