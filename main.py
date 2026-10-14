@@ -351,7 +351,7 @@ class AinaNotesPlugin(BasePlugin):
         if path is None:
             return False
         try:
-            result = await self.ctx.message_processor.send_message_chain(
+            result = await self.ctx.send_message_chain(
                 sid, MessageChain([Image(str(path))])
             )
             if result and getattr(result, "ok", False):
