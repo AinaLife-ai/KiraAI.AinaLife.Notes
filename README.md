@@ -197,6 +197,10 @@ by the Free Software Foundation, either version 3 of the License, or
 <details>
 <summary>📝 更新日志</summary>
 
+**v1.0.9**
+
+- 修复首次启动时的潜在卡顿：内置手写字体若需要下载，原先在事件循环里同步 `urlopen`（单源最长 60 秒），会连带卡住消息收发与 WS 心跳；现整体移入 `asyncio.to_thread`，下载/复制/原子替换逻辑逐行不变。零功能变化。
+
 **v1.0.8**
 
 - 兼容 KiraAI 3.0 GA 弃用面：`ctx.message_processor.send_message_chain` → `ctx.send_message_chain`（两代等价）。零行为变化。

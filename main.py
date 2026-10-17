@@ -496,7 +496,16 @@ class AinaNotesPlugin(BasePlugin):
             logger.warning("[温柔纸条] 内置字体预装异常：%s", e)
 
     async def _ensure_one_bundled_font(self, fname, urls):
-        """确保单个内置字体可用：已有缓存跳过，随附直接复制，否则逐源下载。"""
+        """确保单个内置字体可用（重 IO 全部移出事件循环）。
+
+        字体可能缺失并逐源下载（单源最长 60 秒），若在事件循环里同步
+        urlopen / 写盘，整条消息链路与 WS 心跳都会被钉住。这里只把原实现
+        整体放进线程池，下载/复制/落盘逻辑与日志逐行保持不变。
+        """
+        await asyncio.to_thread(self._ensure_one_bundled_font_sync, fname, urls)
+
+    def _ensure_one_bundled_font_sync(self, fname, urls):
+        """原 `_ensure_one_bundled_font` 的同步实现（仅由 to_thread 调用）。"""
         target = self.data_dir / fname
         if target.exists() and target.stat().st_size > 100000:
             return
